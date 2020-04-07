@@ -8,7 +8,9 @@ const svg = d3.select("body")
     .append("svg")
     .attr("viewBox", [0, 0, width, height])
 
+
 d3.csv("bookings.csv").then((data) => {
+    // data.splice(-1,1)
     data.map(d => {
         d.date = parseTime(d["Date"])
         d.value = Number(d["Amount"].replace(/[^0-9.-]+/g, ""))
@@ -19,9 +21,20 @@ d3.csv("bookings.csv").then((data) => {
     const yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
 
 
-    xScale.domain(d3.extent(data, function (d) {
+
+    //Find the most recent date and add 12 months to extend the chart into the future
+    const mostRecentDate = new Date(d3.max(data, (d) => {
         return d.date
     }))
+    let forecastEndDate = new Date(mostRecentDate)
+    forecastEndDate = forecastEndDate.setFullYear(forecastEndDate.getFullYear() + 1)
+
+    const firstDate = d3.min(data, (d) => {
+        return d.date
+    })
+
+
+    xScale.domain([firstDate, forecastEndDate])
     yScale.domain([0, d3.max(data, function (d) {
         return d.value
     })])
@@ -84,20 +97,52 @@ d3.csv("bookings.csv").then((data) => {
         .y(d => d.value)
 
 
-    svg.append("line")
-        .attr("class", "regression")
-        .datum(linearRegression(data))
-        .attr("x1", d => xScale(d[0][0]))
-        .attr("x2", d => xScale(d[1][0]))
-        .attr("y1", d => yScale(d[0][1]))
-        .attr("y2", d => yScale(d[1][1]));
+    
+    const slope = linearRegression(data).a
+    const yIntercept = linearRegression(data).b
+    let forecastData = []
+
+    let futureMonth = new Date(mostRecentDate)
+    while (futureMonth < forecastEndDate) {
+        if (futureMonth.getMonth() == 11) {
+            futureMonth = new Date(futureMonth.getFullYear() + 1, 1, 0);
+        } else {
+            futureMonth = new Date(futureMonth.getFullYear(), futureMonth.getMonth() + 2, 0);
+        }
+        console.log(futureMonth)
+        let futureValue = slope * futureMonth + yIntercept
+        forecastData.push({
+            date: futureMonth,
+            value: futureValue
+        })
+    }
+
+
+    // Add dots for forecasted values
+    svg.selectAll(".forecast-dot")
+        .data(forecastData)
+        .enter().append("circle") // Uses the enter().append() method
+        .attr("class", "forecast-dot") // Assign a class for styling
+        .attr("cx", function (d) { return xScale(d.date) })
+        .attr("cy", function (d) { return yScale(d.value) })
+        .attr("r", 5)
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", handleMouseOut);
+
+    // console.log(forecastData)
+    // svg.append("line")
+    //     .attr("class", "regression")
+    //     .datum(linearRegression(data))
+    //     .attr("x1", d => xScale(d[0][0]))
+    //     .attr("x2", d => xScale(forecastEndDate))
+    //     .attr("y1", d => yScale(d[0][1]))
+    //     .attr("y2", d => yScale(forecastEndDate * slope + yIntercept));
 
 })
 
 
 
 function handleMouseOver(d, i) {  // Add interactivity
-    console.log('svg', d3.select(this))
     // Use D3 to select element, change color and size
     d3.select(this).attr("class", "focus");
 
