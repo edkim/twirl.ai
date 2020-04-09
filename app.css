@@ -29,9 +29,18 @@ svg {
     fill: #ffab00;
     stroke: #fff;
 }
-
-.regression {
-  stroke: black;
+.present-day {
+  stroke: blue;
+}
+.forecast-line {
+  stroke: green;
+  fill: white;
+  stroke-width: 1;
+  stroke-dasharray: 2;
+}
+.forecast-dot {
+  fill: green;
+  stroke: white;
 }
 /* axis text */
 .axis text {
