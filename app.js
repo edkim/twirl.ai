@@ -1,19 +1,26 @@
+//Global forecast data model
+var forecastBillings = {}
+
+
 const margin = { top: 20, right: 20, bottom: 70, left: 60 },
     width = 600 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom
 
 const parseTime = d3.timeParse("%m/%d/%Y")
+const formatDate = d3.timeFormat("%b %Y")
 
-const svg = d3.select("body")
+const svg = d3.select("#bookings-chart")
     .append("svg")
     .attr("viewBox", [0, 0, width, height])
 
 
 d3.csv("bookings.csv").then((data) => {
-    // data.splice(-1,1)
     data.map(d => {
         d.date = parseTime(d["Date"])
         d.value = Number(d["Amount"].replace(/[^0-9.-]+/g, ""))
+        d.expectedBillings = Number(d["Expected billings"].replace(/[^0-9.-]+/g, ""))
+
+        forecastBillings[d.date] = d.expectedBillings
         return d
     })
 
@@ -52,11 +59,14 @@ d3.csv("bookings.csv").then((data) => {
         } else {
             futureMonth = new Date(futureMonth.getFullYear(), futureMonth.getMonth() + 2, 0);
         }
-        let futureValue = slope * futureMonth + yIntercept
+        let futureValue = Math.round(slope * futureMonth + yIntercept)
         forecastData.push({
             date: futureMonth,
             value: futureValue
         })
+
+        let dateLastYear = new Date(futureMonth.getFullYear() - 1, futureMonth.getMonth(), 0)
+        forecastBillings[futureMonth] = futureValue + forecastBillings[dateLastYear] // doesn't take churn into account
     }
 
     xScale.domain([firstDate, forecastEndDate])
@@ -116,16 +126,8 @@ d3.csv("bookings.csv").then((data) => {
         .attr("cx", function (d) { return xScale(d.date) })
         .attr("cy", function (d) { return yScale(d.value) })
         .attr("r", 2)
-
-    // Add vertical line separating past and present    
-    svg.append("line")
-        .attr("class", "present-day")
-        .attr("x1", xScale(Date.now()))
-        .attr("x2", xScale(Date.now()))
-        .attr("y1", yScale(0))
-        .attr("y2", yScale(d3.max(forecastData, function (d) {
-            return d.value
-        })))
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", handleMouseOut)
 
 
     const forecastLine = d3.line()
@@ -134,20 +136,17 @@ d3.csv("bookings.csv").then((data) => {
         .curve(d3.curveMonotoneX)
 
 
+    const lastDataPoint = data[data.length - 1]
+    // Regression line (suggested forecast #1)
     svg.append("path")
-        .datum(forecastData)
+        .datum(data.slice(-1).concat(forecastData))
         .attr("class", "forecast-line")
         .attr("id", "forecast1")
         .attr("d", forecastLine);
 
-    // Regression line (suggested forecast #1)
+
     const lastForecast = forecastData[forecastData.length - 1]
-    // svg.append("line")
-    //     .attr("class", "forecast")
-    //     .attr("x1", xScale(forecastData[0].date))
-    //     .attr("x2", xScale(lastForecast.date))
-    //     .attr("y1", yScale(forecastData[0].value))
-    //     .attr("y2", yScale(lastForecast.value))
+
 
     // Add dots for forecasted values
     svg.selectAll(".forecast-dot")
@@ -157,36 +156,30 @@ d3.csv("bookings.csv").then((data) => {
         .attr("cx", function (d) { return xScale(d.date) })
         .attr("cy", function (d) { return yScale(d.value) })
         .attr("r", 2)
+        .on("mouseover", handleMouseOver)
+        .on("mouseout", handleMouseOut)
 
-    // Line connecting most recent data point to forecast
-    const lastDataPoint = data[data.length - 1]
-    svg.append("line")
-        .attr("class", "forecast-line")
-        .attr("x1", xScale(lastDataPoint.date))
-        .attr("x2", xScale(forecastData[0].date))
-        .attr("y1", yScale(lastDataPoint.value))
-        .attr("y2", yScale(forecastData[0].value))
 
     // Line continuing most recent value (suggested forecast #2)
-    svg.append("line")
-        .attr("class", "forecast-line")
-        .attr("x1", xScale(lastDataPoint.date))
-        .attr("x2", xScale(lastForecast.date))
-        .attr("y1", yScale(lastDataPoint.value))
-        .attr("y2", yScale(lastDataPoint.value))
+    // svg.append("line")
+    //     .attr("class", "forecast-line")
+    //     .attr("x1", xScale(lastDataPoint.date))
+    //     .attr("x2", xScale(lastForecast.date))
+    //     .attr("y1", yScale(lastDataPoint.value))
+    //     .attr("y2", yScale(lastDataPoint.value))
 
-    // let forecast2Data = {}
-    for (var f of forecastData) {
-        svg.append("circle") 
-            .attr("class", "forecast-dot") 
-            .attr("cx", xScale(f.date))
-            .attr("cy", yScale(lastDataPoint.value))
-            .attr("r", 2)
-        // forecast2Data.push({
-        //     date: f.date,
-        //     value: lastDataPoint.value
-        // })
-    }
+    // // let forecast2Data = {}
+    // for (var f of forecastData) {
+    //     svg.append("circle") 
+    //         .attr("class", "forecast-dot") 
+    //         .attr("cx", xScale(f.date))
+    //         .attr("cy", yScale(lastDataPoint.value))
+    //         .attr("r", 2)
+    //     // forecast2Data.push({
+    //     //     date: f.date,
+    //     //     value: lastDataPoint.value
+    //     // })
+    // }
 
     // Add dragging effects
     d3.selectAll(".forecast-dot").call(d3.drag()
@@ -195,17 +188,48 @@ d3.csv("bookings.csv").then((data) => {
         .on("end", dragEnd))
     function dragStart() {
         d3.select(this).raise().attr("r", 4)
-        console.log(forecastData)
     }
     function dragging(d) {
         d3.select(this).attr("cy", d.y = d3.event.y)
-        d.value = yScale.invert(d.y)
+        d.value = Math.round(yScale.invert(d.y))
+        d3.select("#forecast1").attr("d", forecastLine)
     }
     function dragEnd(d) {
         d3.select(this).attr("r", 2)
-        console.log(forecastData)
-        d3.select("#forecast1").attr("d", forecastLine)
-        //TODO recalculate forecast line
+        
+        // update forecasted billings based on new bookings
+        for (var f of forecastData) {
+            let dateLastYear = new Date(f.date.getFullYear() - 1, f.date.getMonth(), 0)
+            forecastBillings[f.date] = f.value + forecastBillings[dateLastYear]
+        }
+        updateAR()
+    }
+
+
+    // Create Event Handlers for mouse
+    function handleMouseOver(d, i) {  // Add interactivity
+
+        d3.select(this).attr({
+            fill: "orange",
+        });
+
+        svg.append("text")
+            .attr("id", "t-" + i)
+            .attr("x", function () { return xScale(d.date) - 30 })
+            .attr("y", function () { return yScale(d.value) - 15 })
+            .text(() => {
+                return [formatDate(d.date), "$"+d.value]
+            })
+            .attr("font-size", 8)          
+    }
+
+    function handleMouseOut(d, i) {
+        d3.select(this).attr({
+            fill: "green",
+        });
+
+        // Select text by id and then remove
+        d3.select("#t-" + i).remove();  // Remove text location
     }
 
 })

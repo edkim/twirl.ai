@@ -3,15 +3,20 @@
 svg {
   font: 14px 'Open Sans';
 }
-  svg:hover {
-      cursor: ns-resize;
-  }
 
-/* div#container {
-    height: 200px;
+div#bookings-chart {
     overflow: scroll;
-} */
-
+}
+div#ar-chart {
+    overflow: scroll;
+    width: 48%;
+    display: inline-block;
+}
+div#bank-chart {
+    overflow: scroll;
+    width: 48%;
+    display: inline-block;
+}
 .axis path,
 .axis line {
   fill: none;
@@ -41,6 +46,9 @@ svg {
 .forecast-dot {
   fill: green;
   stroke: white;
+}
+.forecast-dot:hover {
+    cursor: ns-resize;
 }
 /* axis text */
 .axis text {
