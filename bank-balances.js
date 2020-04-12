@@ -4,7 +4,6 @@ const bankChart = d3.select("#bank-chart")
 
 // TO DO: Make update function transition new values instead of entirely replacing the chart
 updateBalance = function() {
-    let expensesByMonth = {}
     let balanceByMonth = {}
 
     d3.select("#bank-chart svg").remove()
@@ -59,7 +58,6 @@ updateBalance = function() {
             if (expensesByMonth[futureMonth] === undefined) {
                 expensesByMonth[futureMonth] = expensesByMonth[previousMonth]
             }
-
             let futureBalance = Math.round(balanceByMonth[previousMonth] + forecastCashCollections[futureMonth] - expensesByMonth[futureMonth])
             balanceByMonth[futureMonth] = futureBalance
 

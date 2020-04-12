@@ -17,7 +17,6 @@ function initializeSpreadsheet(data, bookingsData) {
             },
         ],
         onafterchanges: function () {
-            console.log(this.data, bookingsData) // Update historical data in chart
             let i = 0;
             for (var d of bookingsData) {
                 d["Date"] = this.data[i][0]
@@ -25,7 +24,7 @@ function initializeSpreadsheet(data, bookingsData) {
                 i++
             }
             updateBookings(bookingsData, d3.timeParse("%Y-%m-%d 00:00:00"))
-        }
+        },
     })
 }
 

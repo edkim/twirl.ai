@@ -13,6 +13,8 @@ d3.csv("bookings.csv").then((data) => {
     updateBookings(data, d3.timeParse("%m/%d/%Y"))
 })
 
+initializeExpenses()
+
 
 //TODO Clean this shit up
 function cleanBookingsData(data, dateParser) {
@@ -27,4 +29,18 @@ function cleanBookingsData(data, dateParser) {
     })
 
     return data
+}
+
+var modal = document.getElementById('modal')
+modal.onclick = function () {
+    modal.style.display = "none";
+}
+var spreadsheet = document.getElementById('spreadsheet')
+spreadsheet.onclick = function (e) {
+    e.stopPropagation() // Prevents click on spreadsheet from closing modal
+}
+
+// Override keyboard interaction for jexcel. Copy & Paste still works.
+jexcel.keyDownControls = function (e) {
+    return // Don't let user tab to create new columns
 }
