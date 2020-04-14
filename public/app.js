@@ -1,3 +1,12 @@
+/*
+ *  app.js retrieves all of the data for the client-side.
+ *  Data is from DB, or CSV files if user doesn't have any saved data yet.
+ *  The data is then passed to other functions to initialize charts and jexcel for manual input.
+ */
+
+// Global object for storing metric values on the client. Can also be used to POST data to server.
+let metricValues = {}
+
 //Global forecast data model
 let forecastBillings = {}
 

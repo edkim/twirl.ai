@@ -19,6 +19,25 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.tutorials = require("./tutorial.model.js")(sequelize, Sequelize);
+db.metrics = require("./metric.model.js")(sequelize, Sequelize);
+db.metricValues = require("./metric-value.model.js")(sequelize, Sequelize);
+db.users = require("./user.model.js")(sequelize, Sequelize);
+db.scenarios = require("./scenario.model.js")(sequelize, Sequelize);
+
+db.metrics.belongsTo(db.users, {
+  foreignKey: 'user_id'
+});
+
+db.metricValues.belongsTo(db.users, {
+  foreignKey: 'user_id'
+});
+
+db.metricValues.belongsTo(db.scenarios, {
+  foreignKey: 'scenario_id'
+});
+
+db.scenarios.belongsTo(db.users, {
+  foreignKey: 'user_id'
+});
 
 module.exports = db;
