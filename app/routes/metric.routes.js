@@ -1,27 +1,24 @@
 module.exports = app => {
-    const metrics = require("../controllers/tutorial.controller.js");
+    const metrics = require("../controllers/metric.controller.js");
 
     var router = require("express").Router();
 
-    // Create a new Tutorial
+    // Create a new Metric
     router.post("/", metrics.create);
 
     // Retrieve all metrics
     router.get("/", metrics.findAll);
 
-    // Retrieve all published metrics
-    router.get("/published", metrics.findAllPublished);
-
-    // Retrieve a single Tutorial with id
+    // Retrieve a single Met with id
     router.get("/:id", metrics.findOne);
 
-    // Update a Tutorial with id
+    // Update a Metric with id
     router.put("/:id", metrics.update);
 
-    // Delete a Tutorial with id
+    // Delete a Metric with id
     router.delete("/:id", metrics.delete);
 
-    // Create a new Tutorial
+    // Create a new Metric
     router.delete("/", metrics.deleteAll);
 
     app.use('/api/metrics', router);

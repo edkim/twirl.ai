@@ -63,7 +63,7 @@ div#bank-chart {
   stroke: rgba(0, 0, 0, 0.1);
 }
 #modal {
-    display: none; 
+    /* display: none;  */
     position: fixed; 
     z-index: 1; 
     padding-top: 100px; 

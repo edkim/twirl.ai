@@ -34,6 +34,7 @@ app.get("/", (req, res) => {
 
 require("./app/routes/turorial.routes")(app);
 require("./app/routes/metric.routes")(app);
+require("./app/routes/metric-value.routes")(app);
 
 // set port, listen for requests
 const PORT = process.env.PORT || 8080;

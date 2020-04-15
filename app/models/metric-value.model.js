@@ -3,11 +3,11 @@ module.exports = (sequelize, Sequelize) => {
         date: {
             type: Sequelize.DATEONLY
         },
-        value: {
+        metric_id: {
             type: Sequelize.INTEGER
         },
-        metric_id: {
-            type: Sequelize.BOOLEAN
+        value: {
+            type: Sequelize.INTEGER
         },
         is_forecast: {
             type: Sequelize.BOOLEAN

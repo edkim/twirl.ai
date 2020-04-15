@@ -2,13 +2,21 @@ const margin = { top: 20, right: 20, bottom: 70, left: 60 },
     width = 600 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom
 
-function updateBookings(data, dateParser) {
+function updateBookings(data) {
+    let bookingsData = data.map(d => {
+        console.log('date', typeof(d.date))
+        return {
+            date: d.date,
+            value: d.bookings,
+        }
+    })
+
     d3.select("#bookings-chart svg").remove() // Clear any existing bookings chart
     const svg = d3.select("#bookings-chart")
         .append("svg")
         .attr("viewBox", [0, 0, width, height])
 
-    data = cleanBookingsData(data, dateParser)
+    // data = cleanBookingsData(data, dateParser)
 
     const xScale = d3.scaleTime().range([margin.left, width - margin.right]);
     const yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
@@ -46,13 +54,21 @@ function updateBookings(data, dateParser) {
             futureMonth = new Date(futureMonth.getFullYear(), futureMonth.getMonth() + 2, 0);
         }
         let futureValue = Math.round(slope * futureMonth + yIntercept)
+
+        // metricValues.push({
+        //     date: futureMonth,
+        //     metric_id: 1,
+        //     value: futureValue,
+        //     is_forecast: true,
+        // })
+
         forecastData.push({
             date: futureMonth,
             value: futureValue
         })
 
         let dateLastYear = new Date(futureMonth.getFullYear() - 1, futureMonth.getMonth(), 0)
-        forecastBillings[futureMonth] = futureValue + forecastBillings[dateLastYear] // doesn't take churn into account
+        // forecastBillings[futureMonth] = futureValue + forecastBillings[dateLastYear] // doesn't take churn into account
     }
 
     xScale.domain([firstDate, forecastEndDate])
@@ -95,7 +111,7 @@ function updateBookings(data, dateParser) {
 
     // Add historical data as a line plot
     const line = d3.line()
-        .x(function (d, i) { return xScale(d.date) })
+        .x(function (d, i) { console.log(d.date); return xScale(parseDateSS(d.date)) })
         .y(function (d) { return yScale(d.value) })
         .curve(d3.curveMonotoneX)
 
@@ -209,7 +225,6 @@ function updateBookings(data, dateParser) {
         d3.select("#t-" + i).remove();  // Remove text location
     }
 
-    updateAR()
 }
 
 

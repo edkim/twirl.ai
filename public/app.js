@@ -4,52 +4,98 @@
  *  The data is then passed to other functions to initialize charts and jexcel for manual input.
  */
 
-// Global object for storing metric values on the client. Can also be used to POST data to server.
-let metricValues = {}
 
-//Global forecast data model
-let forecastBillings = {}
-
-const parseTime = d3.timeParse("%m/%d/%Y")
-const formatDate = d3.timeFormat("%b %Y")
-const formatSpreadsheetDate = d3.timeFormat("%Y-%m-%d 00:00:00")
-
+let metricValues = [] // Global array for talking to DB [{date, metric_id, value, is_forecast}]
+let MV = [] // Global MetricValues map for client-side use
 let spreadsheetData = []
-d3.csv("bookings.csv").then((data) => {
-
-    data = cleanBookingsData(data, d3.timeParse("%m/%d/%Y"))
-    initializeSpreadsheet(spreadsheetData, data)
-    updateBookings(data, d3.timeParse("%m/%d/%Y"))
-})
-
-initializeExpenses()
 
 
-//TODO Clean this shit up
-function cleanBookingsData(data, dateParser) {
-    data.map(d => {
-        d.date = dateParser(d["Date"])
-        d.value = Number(d["Amount"].replace(/[^0-9.-]+/g, ""))
-        d.expectedBillings = Number(d["Expected billings"].replace(/[^0-9.-]+/g, ""))
+const parseDateCSV = d3.timeParse("%m/%d/%Y")
+const parseDateSS = d3.timeParse("%Y-%m-%d 00:00:00") // TO DO: Delete
+const formatDate = d3.timeFormat("%b %Y")
+const formatDateSS = d3.timeFormat("%Y-%m-%d 00:00:00") // Format needed for jExcel spreadsheet
 
-        forecastBillings[d.date] = d.expectedBillings
-        spreadsheetData.push([formatSpreadsheetDate(d.date), d.value])
-        return d
+d3.csv("sample_data.csv").then((csvData) => {
+    
+    csvData.map(d => {
+        let date = parseDateCSV(d["Date"])
+        console.log(d)
+
+        MV.push({
+            date: date,
+            bookings: Number(d["Bookings"].replace(/[^0-9.-]+/g, "")),
+            expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
+            cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
+            billings: Number(d["Billings"].replace(/[^0-9.-]+/g, "")),
+            currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
+            pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
+            balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
+        })
+        console.log("MV", MV)
+
+        // MV[date] = {
+        //     bookings: Number(d["Bookings"].replace(/[^0-9.-]+/g, "")),
+        //     expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
+        //     cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
+        //     billings: Number(d["Billings"].replace(/[^0-9.-]+/g, "")),
+        //     currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
+        //     pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
+        //     balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
+        // }
+
+        console.log(MV[date]);
+        // MV["bookings"] = Number(d["Bookings"].replace(/[^0-9.-]+/g, ""))
+        // MV["expenses"] = Number(d["Expenses"].replace(/[^0-9.-]+/g, ""))
+        // MV["cashCollected"] = Number(d["Cash Collected"].replace(/[^0-9.-]+/g, ""))
+        // MV["billings"] = Number(d["Billings"].replace(/[^0-9.-]+/g, ""))
+        // MV["currentAR"] = Number(d["AR - Current"].replace(/[^0-9.-]+/g, ""))
+        // MV["pastDueAR"] = Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, ""))
+        // MV["balance"] = Number(d["Ending Balance"].replace(/[^0-9.-]+/g, ""))
+
+        // TODO: Test posting to DB
+        metricValues.push({ "date": MV["date"], "metric_id": 1, "value": MV["bookings"], "is_forecast": false })
+        metricValues.push({ "date": MV["date"], "metric_id": 2, "value": MV["expenses"], "is_forecast": false })
+        metricValues.push({ "date": MV["date"], "metric_id": 3, "value": MV["cashCollected"], "is_forecast": false })
+        metricValues.push({ "date": MV["date"], "metric_id": 4, "value": MV["balance"], "is_forecast": false })
+        metricValues.push({ "date": MV["date"], "metric_id": 5, "value": MV["billings"], "is_forecast": false })
+        metricValues.push({ "date": MV["date"], "metric_id": 6, "value": MV["currentAR"], "is_forecast": false })
+        metricValues.push({ "date": MV["date"], "metric_id": 7, "value": MV["pastDueAR"], "is_forecast": false })
     })
 
-    return data
-}
+    initializeSpreadsheet(MV)
+    updateBookings(metricValues)
+    updateAR(metricValues)
+    updateExpenses(metricValues)
+})
 
-var modal = document.getElementById('modal')
-modal.onclick = function () {
-    modal.style.display = "none";
-}
-var spreadsheet = document.getElementById('spreadsheet')
-spreadsheet.onclick = function (e) {
-    e.stopPropagation() // Prevents click on spreadsheet from closing modal
-}
+// initializeExpenses()
 
-// Override keyboard interaction for jexcel. Copy & Paste still works.
-jexcel.keyDownControls = function (e) {
-    return // Don't let user tab to create new columns
-}
+
+// //TODO Clean this shit up
+// function cleanBookingsData(data, dateParser) {
+//     data.map(d => {
+//         d.date = dateParser(d["Date"])
+//         d.value = Number(d["Amount"].replace(/[^0-9.-]+/g, ""))
+//         d.expectedBillings = Number(d["Expected billings"].replace(/[^0-9.-]+/g, ""))
+
+//         forecastBillings[d.date] = d.expectedBillings
+//         spreadsheetData.push([formatSpreadsheetDate(d.date), d.value])
+//         return d
+//     })
+
+//     return data
+// }
+
+// var modal = document.getElementById('modal')
+// modal.onclick = function () {
+//     modal.style.display = "none";
+// }
+// var spreadsheet = document.getElementById('spreadsheet')
+// spreadsheet.onclick = function (e) {
+//     e.stopPropagation() // Prevents click on spreadsheet from closing modal
+// }
+
+// // Override keyboard interaction for jexcel. Copy & Paste still works.
+// jexcel.keyDownControls = function (e) {
+//     return // Don't let user tab to create new columns
+// }
