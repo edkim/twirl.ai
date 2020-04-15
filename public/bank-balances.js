@@ -3,7 +3,7 @@ const bankChart = d3.select("#bank-chart")
     .attr("viewBox", [0, 0, width/2, height])
 
 // TO DO: Make update function transition new values instead of entirely replacing the chart
-updateBalance = function() {
+updateBalance = function(data) {
     let balanceByMonth = {}
 
     d3.select("#bank-chart svg").remove()
@@ -11,22 +11,22 @@ updateBalance = function() {
         .append("svg")
         .attr("viewBox", [0, 0, width / 2, height])
 
-    d3.csv("bank_balances.csv").then((data) => {
+    // d3.csv("bank_balances.csv").then((data) => {
 
-        const margin = { top: 20, right: 0, bottom: 70, left: 60 },
-            width = 300 - margin.left - margin.right,
-            height = 300 - margin.top - margin.bottom
+        // const margin = { top: 20, right: 0, bottom: 70, left: 60 },
+        //     width = 300 - margin.left - margin.right,
+        //     height = 300 - margin.top - margin.bottom
 
-        data.map(d => {
-            d.date = parseTime(d["Date"])
-            d.balance = Number(d["Ending Balance"].replace(/[^0-9.-]+/g, ""))
-            d.expenses = Number(d["Debits"].replace(/[^0-9.-]+/g, ""))
-            d.balanceChange = Number(d["Change in Cash"].replace(/[^0-9.-]+/g, ""))
+        // data.map(d => {
+        //     d.date = parseTime(d["Date"])
+        //     d.balance = Number(d["Ending Balance"].replace(/[^0-9.-]+/g, ""))
+        //     d.expenses = Number(d["Debits"].replace(/[^0-9.-]+/g, ""))
+        //     d.balanceChange = Number(d["Change in Cash"].replace(/[^0-9.-]+/g, ""))
 
-            expensesByMonth[d.date] = d.expenses
-            balanceByMonth[d.date] = d.balance
-            return d
-        })
+        //     expensesByMonth[d.date] = d.expenses
+        //     balanceByMonth[d.date] = d.balance
+        //     return d
+        // })
 
         const xScale = d3.scaleTime().range([margin.left, width - margin.right])
         const yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top])
@@ -162,6 +162,6 @@ updateBalance = function() {
             // Select text by id and then remove
             d3.select("#t-" + i).remove();  // Remove text location
         }
-    })
+    // })
 }
-updateBalance()
+// updateBalance()

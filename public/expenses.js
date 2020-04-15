@@ -135,22 +135,22 @@ function updateExpenses(data) {
 
 
     // Regression line (suggested forecast #1)
-    svg.append("path")
-        .datum(data.slice(-1).concat(forecastData))
-        .attr("class", "forecast-line")
-        .attr("id", "expense-forecast")
-        .attr("d", forecastLine)
+    // svg.append("path")
+    //     .datum(data.slice(-1).concat(forecastData))
+    //     .attr("class", "forecast-line")
+    //     .attr("id", "expense-forecast")
+    //     .attr("d", forecastLine)
 
-    // Add dots for forecasted values
-    svg.selectAll(".forecast-dot")
-        .data(forecastData)
-        .enter().append("circle")
-        .attr("class", "forecast-dot")
-        .attr("cx", function (d) { return xScale(d.date) })
-        .attr("cy", function (d) { return yScale(d.value) })
-        .attr("r", 2)
-        .on("mouseover", handleMouseOver)
-        .on("mouseout", handleMouseOut)
+    // // Add dots for forecasted values
+    // svg.selectAll(".forecast-dot")
+    //     .data(forecastData)
+    //     .enter().append("circle")
+    //     .attr("class", "forecast-dot")
+    //     .attr("cx", function (d) { return xScale(d.date) })
+    //     .attr("cy", function (d) { return yScale(d.value) })
+    //     .attr("r", 2)
+    //     .on("mouseover", handleMouseOver)
+    //     .on("mouseout", handleMouseOut)
 
     // Add dragging effects
     d3.selectAll("#expenses-chart .forecast-dot").call(d3.drag()

@@ -2,8 +2,12 @@ function initializeSpreadsheet(data) {
     console.log("spreadsheet", data)
     
     window.spreadsheet = jexcel(document.getElementById('spreadsheet'), {
-        data: prepareDate(data),
+        data: data,
         columns: [
+            {
+                type: 'hidden',
+                title: `jExcel doesn't like this date`,
+            },
             {
                 type: 'calendar',
                 title: 'Date',
@@ -31,12 +35,12 @@ function initializeSpreadsheet(data) {
 
     function prepareDate(data) {
         // console.log("data", data)
-        // return data.map(d => {
-        //     return {
-        //         date: formatDateSS(d.date),
-        //         bookings: d.value,
-        //     }
-        // })
+        return data.map(d => {
+            return {
+                date: formatDateSS(d.date),
+                bookings: d.bookings,
+            }
+        })
         // return data
     }
 }

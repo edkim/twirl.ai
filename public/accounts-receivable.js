@@ -5,7 +5,7 @@ let forecastCashCollections = {}
 
 // TO DO: Make update function transition new values instead of entirely replacing the chart
 let updateBalance = function() {} // Will be defined later
-let updateAR = function() {
+let updateAR = function(data) {
     let pastDueARByMonth = {}
 
     d3.select("#ar-chart svg").remove()
@@ -13,23 +13,23 @@ let updateAR = function() {
         .append("svg")
         .attr("viewBox", [0, 0, width / 2, height])
 
-    d3.csv("accounts_receivable.csv").then((data) => {
+    // d3.csv("accounts_receivable.csv").then((data) => {
         
 
         const arMargin = { top: 20, right: 0, bottom: 70, left: 60 },
             arWidth = 300 - arMargin.left - arMargin.right,
             arHeight = 300 - arMargin.top - arMargin.bottom
 
-        data.map(d => {
-            d.date = parseTime(d["Date"])
-            d.currentAmount = Number(d["Due in <30 days"].replace(/[^0-9.-]+/g, ""))
-            d.pastDueAmount = Number(d["Past Due"].replace(/[^0-9.-]+/g, ""))
-            d.cashCollected = Number(d["Cash Collected"].replace(/[^0-9.-]+/g, ""))
+        // data.map(d => {
+        //     d.date = parseTime(d["Date"])
+        //     d.currentAmount = Number(d["Due in <30 days"].replace(/[^0-9.-]+/g, ""))
+        //     d.pastDueAmount = Number(d["Past Due"].replace(/[^0-9.-]+/g, ""))
+        //     d.cashCollected = Number(d["Cash Collected"].replace(/[^0-9.-]+/g, ""))
             
-            forecastCashCollections[d.date] = d.cashCollected
-            pastDueARByMonth[d.date] = d.pastDueAmount
-            return d
-        })
+        //     forecastCashCollections[d.date] = d.cashCollected
+        //     pastDueARByMonth[d.date] = d.pastDueAmount
+        //     return d
+        // })
 
         const xScale = d3.scaleTime().range([arMargin.left, arWidth - arMargin.right])
         const yScale = d3.scaleLinear().rangeRound([arHeight - arMargin.bottom, arMargin.top])
@@ -165,7 +165,7 @@ let updateAR = function() {
             // Select text by id and then remove
             d3.select("#t-" + i).remove();  // Remove text location
         }
-    })
-    updateBalance()
+    // })
+    // updateBalance()
 }
-updateAR()
+// updateAR()

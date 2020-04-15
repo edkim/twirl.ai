@@ -3,13 +3,13 @@ const margin = { top: 20, right: 20, bottom: 70, left: 60 },
     height = 300 - margin.top - margin.bottom
 
 function updateBookings(data) {
-    let bookingsData = data.map(d => {
-        console.log('date', typeof(d.date))
-        return {
-            date: d.date,
-            value: d.bookings,
-        }
-    })
+    // data.map(d => {
+    //     console.log('date', typeof(d.date))
+    //     // return {
+    //     //     date: d.date,
+    //     //     value: d.bookings,
+    //     // }
+    // })
 
     d3.select("#bookings-chart svg").remove() // Clear any existing bookings chart
     const svg = d3.select("#bookings-chart")
@@ -111,8 +111,8 @@ function updateBookings(data) {
 
     // Add historical data as a line plot
     const line = d3.line()
-        .x(function (d, i) { console.log(d.date); return xScale(parseDateSS(d.date)) })
-        .y(function (d) { return yScale(d.value) })
+        .x(function (d, i) { return xScale(d.date) })
+        .y(function (d) { return yScale(d.bookings) })
         .curve(d3.curveMonotoneX)
 
     svg.append("path")
@@ -137,29 +137,29 @@ function updateBookings(data) {
         .on("mouseout", handleMouseOut)
 
 
-    const forecastLine = d3.line()
-        .x(function (d, i) { return xScale(d.date) })
-        .y(function (d) { return yScale(d.value) })
-        .curve(d3.curveMonotoneX)
+    // const forecastLine = d3.line()
+    //     .x(function (d, i) { return xScale(d.date) })
+    //     .y(function (d) { return yScale(d.value) })
+    //     .curve(d3.curveMonotoneX)
 
 
-    // Regression line (suggested forecast #1)
-    svg.append("path")
-        .datum(data.slice(-1).concat(forecastData))
-        .attr("class", "forecast-line")
-        .attr("id", "forecast1")
-        .attr("d", forecastLine)
+    // // Regression line (suggested forecast #1)
+    // svg.append("path")
+    //     .datum(data.slice(-1).concat(forecastData))
+    //     .attr("class", "forecast-line")
+    //     .attr("id", "forecast1")
+    //     .attr("d", forecastLine)
 
-    // Add dots for forecasted values
-    svg.selectAll(".forecast-dot")
-        .data(forecastData)
-        .enter().append("circle")
-        .attr("class", "forecast-dot")
-        .attr("cx", function (d) { return xScale(d.date) })
-        .attr("cy", function (d) { return yScale(d.value) })
-        .attr("r", 2)
-        .on("mouseover", handleMouseOver)
-        .on("mouseout", handleMouseOut)
+    // // Add dots for forecasted values
+    // svg.selectAll(".forecast-dot")
+    //     .data(forecastData)
+    //     .enter().append("circle")
+    //     .attr("class", "forecast-dot")
+    //     .attr("cx", function (d) { return xScale(d.date) })
+    //     .attr("cy", function (d) { return yScale(d.value) })
+    //     .attr("r", 2)
+    //     .on("mouseover", handleMouseOver)
+    //     .on("mouseout", handleMouseOut)
 
     // Add dragging effects
     d3.selectAll("#bookings-chart .forecast-dot").call(d3.drag()

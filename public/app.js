@@ -6,7 +6,8 @@
 
 
 let metricValues = [] // Global array for talking to DB [{date, metric_id, value, is_forecast}]
-let MV = [] // Global MetricValues map for client-side use
+let MV = {} // Global MetricValues map for client-side use
+let MVSS = [] 
 let spreadsheetData = []
 
 
@@ -18,11 +19,23 @@ const formatDateSS = d3.timeFormat("%Y-%m-%d 00:00:00") // Format needed for jEx
 d3.csv("sample_data.csv").then((csvData) => {
     
     csvData.map(d => {
-        let date = parseDateCSV(d["Date"])
-        console.log(d)
+        let date = parseDateCSV(d["Date"]), // Date object for use in most places
+            ssDate = formatDateSS(date) // String for jExcel use
 
-        MV.push({
-            date: date,
+        MVSS.push([
+            date,
+            ssDate,
+            Number(d["Bookings"].replace(/[^0-9.-]+/g, "")),
+            Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
+            Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
+            Number(d["Billings"].replace(/[^0-9.-]+/g, "")),
+            Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
+            Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
+            Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
+        ])
+        // console.log("MV", MV)
+
+        MV[date] = {
             bookings: Number(d["Bookings"].replace(/[^0-9.-]+/g, "")),
             expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
             cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
@@ -30,20 +43,9 @@ d3.csv("sample_data.csv").then((csvData) => {
             currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
             pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
             balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
-        })
-        console.log("MV", MV)
+        }
 
-        // MV[date] = {
-        //     bookings: Number(d["Bookings"].replace(/[^0-9.-]+/g, "")),
-        //     expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
-        //     cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
-        //     billings: Number(d["Billings"].replace(/[^0-9.-]+/g, "")),
-        //     currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
-        //     pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
-        //     balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
-        // }
-
-        console.log(MV[date]);
+        // console.log(MV[date]);
         // MV["bookings"] = Number(d["Bookings"].replace(/[^0-9.-]+/g, ""))
         // MV["expenses"] = Number(d["Expenses"].replace(/[^0-9.-]+/g, ""))
         // MV["cashCollected"] = Number(d["Cash Collected"].replace(/[^0-9.-]+/g, ""))
@@ -62,10 +64,10 @@ d3.csv("sample_data.csv").then((csvData) => {
         metricValues.push({ "date": MV["date"], "metric_id": 7, "value": MV["pastDueAR"], "is_forecast": false })
     })
 
-    initializeSpreadsheet(MV)
-    updateBookings(metricValues)
-    updateAR(metricValues)
-    updateExpenses(metricValues)
+    initializeSpreadsheet(MVSS)
+    updateBookings(MV)
+    updateAR(MV)
+    updateExpenses(MV)
 })
 
 // initializeExpenses()
