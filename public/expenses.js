@@ -1,21 +1,5 @@
 let expensesByMonth = {}
 
-
-function initializeExpenses() {
-    d3.csv("expenses.csv").then((data) => {
-        data.map(d => {
-            d.date = parseTime(d["Date"])
-            d.value = Number(d["Amount"].replace(/[^0-9.-]+/g, ""))
-
-            expensesByMonth[d.date] = d.value
-
-            return d
-        })
-
-        updateExpenses(data)
-    })
-}
-
 function updateExpenses(data) {
     d3.select("#expenses-chart svg").remove() // Clear existing chart, if any
     const svg = d3.select("#expenses-chart")
@@ -41,7 +25,7 @@ function updateExpenses(data) {
     // TODO Extract this regression code into shared function
     const linearRegression = d3.regressionLinear()
         .x(d => d.date)
-        .y(d => d.value)
+        .y(d => d.expenses)
 
     const slope = linearRegression(data).a
     const yIntercept = linearRegression(data).b
@@ -67,8 +51,8 @@ function updateExpenses(data) {
     console.log(expensesByMonth)
 
     xScale.domain([firstDate, forecastEndDate])
-    yScale.domain([0, d3.max(forecastData, function (d) {
-        return d.value
+    yScale.domain([0, d3.max(data, function (d) {
+        return d.expenses
     })])
 
     const yaxis = d3.axisLeft()
@@ -106,7 +90,7 @@ function updateExpenses(data) {
     // Add historical data as a line plot
     const line = d3.line()
         .x(function (d, i) { return xScale(d.date) })
-        .y(function (d) { return yScale(d.value) })
+        .y(function (d) { return yScale(d.expenses) })
         .curve(d3.curveMonotoneX)
 
     svg.append("path")

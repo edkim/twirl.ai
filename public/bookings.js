@@ -11,6 +11,8 @@ function updateBookings(data) {
     //     // }
     // })
 
+    console.log('data',data)
+
     d3.select("#bookings-chart svg").remove() // Clear any existing bookings chart
     const svg = d3.select("#bookings-chart")
         .append("svg")
@@ -38,8 +40,7 @@ function updateBookings(data) {
 
     const linearRegression = d3.regressionLinear()
         .x(d => d.date)
-        .y(d => d.value)
-
+        .y(d => d.bookings)
 
 
     const slope = linearRegression(data).a
