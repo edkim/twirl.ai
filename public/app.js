@@ -7,7 +7,9 @@
 
 let metricValues = [] // Global MetricValues array for talking to DB [{date, metric_id, value, is_forecast}]
 let MV = [] // Global MetricValues array for d3
-let MVMonthly = {} // Global MetricValues by month
+let forecastData = [] // Siimlar to MV except for future dates and values
+let MVByMonth = {} // Global MetricValues by month
+
 
 
 const parseDateCSV = d3.timeParse("%m/%d/%Y")
@@ -33,7 +35,7 @@ d3.csv("sample_data.csv").then((csvData) => {
             balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
         })
 
-        MVMonthly[date] = {
+        MVByMonth[date] = {
             bookings: Number(d["Bookings"].replace(/[^0-9.-]+/g, "")),
             expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
             cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
@@ -57,6 +59,7 @@ d3.csv("sample_data.csv").then((csvData) => {
     updateBookings(MV)
     updateAR(MV)
     updateExpenses(MV)
+    updateBalance(MV)
 })
 
 // Modal for spreadsheet input

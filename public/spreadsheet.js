@@ -1,6 +1,4 @@
 function initializeSpreadsheet(data) {
-    console.log("spreadsheet", data)
-    
     window.spreadsheet = jexcel(document.getElementById('spreadsheet'), {
         data: data,
         columns: [
@@ -19,7 +17,42 @@ function initializeSpreadsheet(data) {
                 title: 'Bookings',
                 mask: '$#,##',
                 width: 80,
-                decimal: ','
+            },
+            {
+                type: 'numeric',
+                title: 'Expenses',
+                mask: '$#,##',
+                width: 80,
+            },
+            {
+                type: 'numeric',
+                title: 'Cash Collected',
+                mask: '$#,##',
+                width: 80,
+            },
+            {
+                type: 'numeric',
+                title: 'Billings',
+                mask: '$#,##',
+                width: 80,
+            },
+            {
+                type: 'numeric',
+                title: 'AR - Current',
+                mask: '$#,##',
+                width: 80,
+            },
+            {
+                type: 'numeric',
+                title: 'AR - Past Due',
+                mask: '$#,##',
+                width: 80,
+            },
+            {
+                type: 'numeric',
+                title: 'Cash Balance',
+                mask: '$#,##',
+                width: 80,
             },
         ],
         // onafterchanges: function () {
@@ -32,16 +65,5 @@ function initializeSpreadsheet(data) {
         //     updateBookings(bookingsData, d3.timeParse("%Y-%m-%d 00:00:00"))
         // },
     })
-
-    function prepareDate(data) {
-        // console.log("data", data)
-        return data.map(d => {
-            return {
-                date: formatDateSS(d.date),
-                bookings: d.bookings,
-            }
-        })
-        // return data
-    }
 }
 
