@@ -159,12 +159,12 @@ function addLines(svg, data, metric, xScale, yScale) {
         // TODO: Make a lasso to select multiple forecast points
         if (d3.event.sourceEvent.shiftKey) {
             d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (d, i) {
-                d3.select(this).attr("cy", d.y = d3.event.y)
-                d[metric] = Math.round(yScale.invert(d.y))
+                d3.select(this).attr("cy", d3.event.y)
+                d[metric] = Math.round(yScale.invert(d3.event.y))
             })
         } else {
-            d3.select(this).attr("cy", d.y = d3.event.y)
-            d[metric] = Math.round(yScale.invert(d.y))
+            d3.select(this).attr("cy", d3.event.y)
+            d[metric] = Math.round(yScale.invert(d3.event.y))
         }
         d3.select(`#forecast1-${metric}`).attr("d", forecastLine)
     }
