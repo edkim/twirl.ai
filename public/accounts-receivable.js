@@ -1,11 +1,11 @@
 const CURRENT_COLLECTION_RATE = 0.6
 const PAST_DUE_COLLECTION_RATE = 0.5
-let forecastCashCollections = {}
+// let forecastCashCollections = {}
 
 
 let updateBalance = function() {} // Will be defined later
 let updateAR = function(data) {
-    let pastDueARByMonth = {}
+    let metric = "cashCollected"
 
     // TO DO: Make update function transition new values instead of entirely replacing the chart
     d3.select("#ar-chart svg").remove()
@@ -37,24 +37,38 @@ let updateAR = function(data) {
     let forecastData = []
     
     let previousMonth = new Date(mostRecentDate)
-    let futureMonth = new Date(mostRecentDate)
-    // while (futureMonth < forecastEndDate) {
-    //     previousMonth = futureMonth
-    //     if (futureMonth.getMonth() == 11) {
-    //         futureMonth = new Date(futureMonth.getFullYear() + 1, 1, 0);
-    //     } else {
-    //         futureMonth = new Date(futureMonth.getFullYear(), futureMonth.getMonth() + 2, 0);
-    //     }
+    let forecastMonth = new Date(mostRecentDate)
+    while (forecastMonth < forecastEndDate) {
+        previousMonth = forecastMonth
+        if (forecastMonth.getMonth() == 11) {
+            forecastMonth = new Date(forecastMonth.getFullYear() + 1, 1, 0);
+        } else {
+            forecastMonth = new Date(forecastMonth.getFullYear(), forecastMonth.getMonth() + 2, 0);
+        }
+        
+        let previousMonthForecasts = forecastData.find(x => x.date.getTime() == previousMonth.getTime())
+        if (previousMonthForecasts && previousMonthForecasts.billing) { // previous month Billings forecast exists
+            forecastBillings = previousMonthForecasts.billing
+        } else { // try historical data
+            let previousMonthData = MV.find(x => x.date.getTime() == previousMonth.getTime())
+            if (previousMonthData) {
+                forecastBillings = previousMonthData.billings
+            }
+        }
+        // use last month's forecast billings
+        let futureCashCollected = Math.round(CURRENT_COLLECTION_RATE * forecastBillings) // TODO: Add pastDue AR
+        // pastDueARByMonth[forecastMonth] = (1 - PAST_DUE_COLLECTION_RATE) * pastDueARByMonth[previousMonth] + (1 - CURRENT_COLLECTION_RATE) * forecastBillings
 
-    //     let futureCashCollected = Math.round(CURRENT_COLLECTION_RATE * forecastBillings[previousMonth] + PAST_DUE_COLLECTION_RATE * pastDueARByMonth[previousMonth])
-    //     pastDueARByMonth[futureMonth] = (1 - PAST_DUE_COLLECTION_RATE) * pastDueARByMonth[previousMonth] + (1 - CURRENT_COLLECTION_RATE) * forecastBillings[previousMonth]
-
-    //     forecastCashCollections[futureMonth] = futureCashCollected
-    //     forecastData.push({
-    //         date: futureMonth,
-    //         cashCollected: futureCashCollected
-    //     })
-    // }
+        let idx = forecastData.findIndex(x => x.date.getTime() === forecastMonth.getTime())
+        if (idx == -1) { // Insert new entry into forecastData
+            forecastData.push({
+                date: forecastMonth,
+                [metric]: futureCashCollected,
+            })
+        } else {
+            forecastData[idx][metric] = futureCashCollected
+        }
+    }
 
     xScale.domain([firstDate, forecastEndDate])
     yScale.domain([0, d3.max(data, function (d) {
