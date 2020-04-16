@@ -2,24 +2,22 @@ const margin = { top: 20, right: 20, bottom: 70, left: 60 },
     width = 600 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom
 
-const xScale = d3.scaleTime().range([margin.left, width - margin.right]);
-const yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
+
 
 function updateBookings(data) {
+    const xScale = d3.scaleTime().range([margin.left, width - margin.right]);
+    const yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
 
     d3.select("#bookings-chart svg").remove() // Clear any existing bookings chart
     const svg = d3.select("#bookings-chart")
         .append("svg")
         .attr("viewBox", [0, 0, width, height])
 
-    setupAxes(svg, data, "bookings")
-    addLines(svg, data, "bookings")
-
-
-
+    setupAxes(svg, data, "bookings", xScale, yScale)
+    addLines(svg, data, "bookings", xScale, yScale)
 }
 
-function setupAxes(svg, data, metric) {
+function setupAxes(svg, data, metric, xScale, yScale) {
     //Find the most recent date and add 12 months to extend the chart into the future
     const mostRecentDate = new Date(d3.max(data, (d) => {
         return d.date
@@ -58,7 +56,6 @@ function setupAxes(svg, data, metric) {
             forecastData[idx][metric] = futureValue
         }
     }
-    console.log(metric, forecastData)
 
     xScale.domain([firstDate, forecastEndDate])
     yScale.domain([0, d3.max(forecastData, function (d) {
@@ -97,7 +94,7 @@ function setupAxes(svg, data, metric) {
 
 }
 
-function addLines(svg, data, metric) {
+function addLines(svg, data, metric, xScale, yScale) {
     // Add historical data as a line plot
     const line = d3.line()
         .x(function (d, i) { return xScale(d.date) })
@@ -134,16 +131,16 @@ function addLines(svg, data, metric) {
 
     // Regression line (suggested forecast #1)
     svg.append("path")
-        .datum(forecastData)
+        .datum(data.slice(-1).concat(forecastData)) // Add the last historical data point to connect the lines
         .attr("class", "forecast-line")
-        .attr("id", "forecast1")
+        .attr("id", `forecast1-${metric}`)
         .attr("d", forecastLine)
 
     // Add dots for forecasted values
-    svg.selectAll(".forecast-dot")
+    svg.selectAll(`.forecast-dot .${metric}`)
         .data(forecastData)
         .enter().append("circle")
-        .attr("class", "forecast-dot")
+        .attr("class", `forecast-dot .${metric}`)
         .attr("cx", function (d) { return xScale(d.date) })
         .attr("cy", function (d) { return yScale(d[metric]) })
         .attr("r", 2)
@@ -163,13 +160,13 @@ function addLines(svg, data, metric) {
         if (d3.event.sourceEvent.shiftKey) {
             d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (d, i) {
                 d3.select(this).attr("cy", d.y = d3.event.y)
-                d.value = Math.round(yScale.invert(d.y))
+                d[metric] = Math.round(yScale.invert(d.y))
             })
         } else {
             d3.select(this).attr("cy", d.y = d3.event.y)
-            d.value = Math.round(yScale.invert(d.y))
+            d[metric] = Math.round(yScale.invert(d.y))
         }
-        d3.select("#forecast1").attr("d", forecastLine)
+        d3.select(`#forecast1-${metric}`).attr("d", forecastLine)
     }
     function dragEnd(d) {
         d3.select(this).attr("r", 2)
@@ -177,9 +174,9 @@ function addLines(svg, data, metric) {
         // TODO: update forecasted billings based on new bookings
         for (var f of forecastData) {
             let dateLastYear = new Date(f.date.getFullYear() - 1, f.date.getMonth(), 0)
-            forecastBillings[f.date] = f.value + forecastBillings[dateLastYear]
+            f.billings = f.bookings + MV.find(x => x.date.getTime() == dateLastYear.getTime()).billings
         }
-        updateAR()
+        updateAR(data)
     }
 
     function mouseoverLine(d, i) {
@@ -200,7 +197,7 @@ function addLines(svg, data, metric) {
             .attr("x", function () { return xScale(d.date) - 30 })
             .attr("y", function () { return yScale(d[metric]) - 15 })
             .text(() => {
-                return [formatDate(d.date), " $" + d[metric]]
+                return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
             })
             .attr("font-size", 8)
     }
