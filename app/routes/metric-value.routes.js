@@ -3,8 +3,11 @@ module.exports = app => {
 
     var router = require("express").Router();
 
-    // Create a new metricValues
+    // Create a new metricValue
     router.post("/", metricValues.create);
+
+    // Create a bunch of metricValues with an array
+    router.post("/bulk", metricValues.createMany);
 
     // Retrieve all metricValues
     router.get("/", metricValues.findAll);

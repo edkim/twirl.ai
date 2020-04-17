@@ -16,8 +16,11 @@ exports.create = (req, res) => {
     // Create a MetricValue
     const metricValue = {
         date: req.body.date,
-        metric_id: req.body.metric_id,
-        value: req.body.value,
+        bookings: req.body.bookings,
+        expenses: req.body.expenses,
+        cash_collected: req.body.cash_collected,
+        billings: req.body.billings,
+        balance: req.body.balance,
         is_forecast: req.body.is_forecast,
     };
 
@@ -33,6 +36,48 @@ exports.create = (req, res) => {
             });
         });
 };
+
+exports.createMany = (req, res) => {
+    console.log('creating bulk metricvalue', req.body)
+    // Validate request
+    if (!req.body[0].date) {
+        res.status(400).send({
+            message: "Must send an array, and Date can not be empty!"
+        });
+        return;
+    }
+
+    let savedMetricValues = [] // For the response; doesn't work yet
+    req.body.forEach(d => {
+        // Create a MetricValue
+        const metricValue = {
+            date: d.date,
+            bookings: d.bookings,
+            expenses: d.expenses,
+            cash_collected: d.cash_collected,
+            billings: d.billings,
+            balance: d.balance,
+            is_forecast: d.is_forecast,
+        }
+
+        // TODO: send back an array after all data is saved
+        MetricValue.create(metricValue)
+            .then(data => {
+                savedMetricValues.push(data);
+            })
+            .catch(err => {
+                res.status(500).send({
+                    message:
+                        err.message || "Some error occurred while creating the MetricValue."
+                })
+
+                return
+            })
+        
+    })
+
+    res.send(savedMetricValues) // Not working yet. Sends []
+}
 
 // Retrieve all MetricValues from the database.
 exports.findAll = (req, res) => {

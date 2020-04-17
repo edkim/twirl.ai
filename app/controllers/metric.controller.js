@@ -13,10 +13,10 @@ exports.create = (req, res) => {
     }
 
     // Create a Metric
-    const tutorial = {
-        title: req.body.title,
+    const metric = {
+        name: req.body.name,
         description: req.body.description,
-        published: req.body.published ? req.body.published : false
+        user_id: req.body.user_id ? req.body.user_id : null
     };
 
     // Save Metric in the database

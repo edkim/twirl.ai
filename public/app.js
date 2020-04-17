@@ -5,17 +5,13 @@
  */
 
 
-let metricValues = [] // Global MetricValues array for talking to DB [{date, metric_id, value, is_forecast}]
+let MVDB = [] // Global MetricValues array for talking to DB [{date, metric_id, value, is_forecast}]
 let MV = [] // Global MetricValues array for d3
-// let forecastData = [] // Siimlar to MV except for future dates and values
-let MVByMonth = {} // Global MetricValues by month
 let lastDataDate, forecastEndDate // Global for the last date for which we have historical data
 
 
 
 const parseDateCSV = d3.timeParse("%m/%d/%Y")
-// const parseDateSS = d3.timeParse("%Y-%m-%d 00:00:00") // TO DO: Delete
-// const formatDate = d3.timeFormat("%b %Y")
 const formatDateSS = d3.timeFormat("%Y-%m-%d 00:00:00") // Format needed for jExcel spreadsheet
 
 d3.csv("sample_data.csv").then((csvData) => {
@@ -31,9 +27,10 @@ d3.csv("sample_data.csv").then((csvData) => {
             expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
             cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
             billings: Number(d["Billings"].replace(/[^0-9.-]+/g, "")),
-            currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
-            pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
+            // currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
+            // pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
             balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
+            is_forecast: false,
         })
     })
 
@@ -43,6 +40,31 @@ d3.csv("sample_data.csv").then((csvData) => {
     
     // 12 month forecast horizon
     forecastEndDate = new Date(lastDataDate.getFullYear() + 1, lastDataDate.getMonth(), 0)
+    
+    let sample = [MV[0], MV[1]]
+    // d3.json('/api/metricValues', {
+    //     method: "POST",
+    //     body: JSON.stringify({
+    //         date: sample.date,
+    //         bookings: sample.bookings,
+    //         expenses: sample.expenses,
+    //         cash_collected: sample.cashCollected,
+    //         billings: sample.billings,
+    //         balance: sample.balance,
+    //         is_forecast: sample.is_forecast,
+    //     }),
+    //     headers: {
+    //         "Content-type": "application/json; charset=UTF-8"
+    //     }
+    // })
+
+    d3.json('/api/metricValues/bulk', {
+        method: "POST",
+        body: JSON.stringify(sample),
+        headers: {
+            "Content-type": "application/json; charset=UTF-8"
+        }
+    })
 
     initializeSpreadsheet(MV)
     updateMetric("bookings")

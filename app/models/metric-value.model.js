@@ -3,10 +3,19 @@ module.exports = (sequelize, Sequelize) => {
         date: {
             type: Sequelize.DATEONLY
         },
-        metric_id: {
+        bookings: {
             type: Sequelize.INTEGER
         },
-        value: {
+        expenses: {
+            type: Sequelize.INTEGER
+        },
+        cash_collected: {
+            type: Sequelize.INTEGER
+        },
+        billings: {
+            type: Sequelize.INTEGER
+        },
+        balance: {
             type: Sequelize.INTEGER
         },
         is_forecast: {
