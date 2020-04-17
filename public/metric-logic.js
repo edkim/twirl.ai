@@ -1,6 +1,6 @@
 function updateMetric(metric) {
     const xScale = d3.scaleTime().range([margin.left, width - margin.right]);
-    const yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
+    const yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]);
 
     d3.select(`#${metric}-chart`).remove() // Clear any existing chart
     
@@ -21,7 +21,7 @@ function makeForecast(metric) {
 
     switch(metric) {
         case "cashCollected":
-            var forecastBillings
+            CURRENT_COLLECTION_RATE = 0.8 // TODO: Let user adjust, or base on historical collections
 
             while (forecastMonth < forecastEndDate) {
                 let previousMonth = forecastMonth
@@ -29,21 +29,38 @@ function makeForecast(metric) {
 
                 let previousMonthForecasts = MV.find(x => x.date.getTime() == previousMonth.getTime())
                 if (previousMonthForecasts && previousMonthForecasts.billings) { // previous month Billings forecast exists
-                    forecastBillings = previousMonthForecasts.billings
-                } else { // try historical data
-                    // let previousMonthData = MV.find(x => x.date.getTime() == previousMonth.getTime())
-                    // if (previousMonthData) {
-                    //     forecastBillings = previousMonthData.billings
-                    // }
-                    console.error("no previous billings data or forecast found")
+                    billingsLastMonth = previousMonthForecasts.billings
+                } else { 
+                    console.error("Last month's billings data found")
                 }
                 // use last month's forecast billings
-                let futureCashCollected = Math.round(CURRENT_COLLECTION_RATE * forecastBillings) // TODO: Add pastDue AR
+                let futureCashCollected = Math.round(CURRENT_COLLECTION_RATE * billingsLastMonth) // TODO: Add pastDue AR
                 // pastDueARByMonth[forecastMonth] = (1 - PAST_DUE_COLLECTION_RATE) * pastDueARByMonth[previousMonth] + (1 - CURRENT_COLLECTION_RATE) * forecastBillings
-                console.log("updating cash forecast")
                 updateMV(metric, forecastMonth, futureCashCollected)
             }
+        case "balance":
+            while (forecastMonth < forecastEndDate) {
+                let previousMonth = forecastMonth
+                forecastMonth = nextMonth(forecastMonth)
 
+                let previousMonthForecasts = MV.find(x => x.date.getTime() == previousMonth.getTime())
+                if (previousMonthForecasts && previousMonthForecasts.balance) { // previous month Billings forecast exists
+                    previousBalance = previousMonthForecasts.balance
+                } else {
+                    console.error("no previous balance data or forecast found")
+                }
+
+                let forecastMonthData = MV.find(x => x.date.getTime() == forecastMonth.getTime())
+                if (forecastMonthData && forecastMonthData.expenses && forecastMonthData.cashCollected) {
+                    forecastExpenses = forecastMonthData.expenses
+                    forecastCashCollected = forecastMonthData.cashCollected
+                } else {
+                    console.error("no previous expense data or forecast found")
+                }
+                let forecastBalance = previousBalance + forecastCashCollected - forecastExpenses
+
+                updateMV(metric, forecastMonth, forecastBalance)
+            }
         default: // Forecast is based on a linear regression
             const linearRegression = d3.regressionLinear()
                 .x(d => d.date)

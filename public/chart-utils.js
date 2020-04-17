@@ -14,6 +14,10 @@ function setupAxes(svg, metric, xScale, yScale) {
         return d[metric]
     })])
 
+    let yAxisScale = d3.scaleLinear()
+        .domain([d3.min(MV, d => d[metric]), d3.max(MV, d => d[metric])])
+        .range([height - yScale(d3.min(MV, d => d[metric])), 0]);
+
     const yaxis = d3.axisLeft()
         .scale(yScale)
 
@@ -122,14 +126,10 @@ function addLines(svg, metric, xScale, yScale) {
     }
     function dragEnd(d) {
         d3.select(this).attr("r", 2)
-        console.log("dragging end")
-        // TODO: update forecasted billings based on new bookings
-        // for (var f of forecastData()) {
-        //     let dateLastYear = new Date(f.date.getFullYear() - 1, f.date.getMonth(), 0)
-        //     f.billings = f.bookings + MV.find(x => x.date.getTime() == dateLastYear.getTime()).billings
-        // }
+
         syncForecasts()
         updateMetric("cashCollected")
+        updateMetric("balance")
     }
 
     function mouseoverLine(d, i) {
