@@ -41,30 +41,15 @@ d3.csv("sample_data.csv").then((csvData) => {
     // 12 month forecast horizon
     forecastEndDate = new Date(lastDataDate.getFullYear() + 1, lastDataDate.getMonth(), 0)
     
-    let sample = [MV[0], MV[1]]
-    // d3.json('/api/metricValues', {
+    // let sample = [MV[0], MV[1]]
+
+    // d3.json('/api/metricValues/bulk', {
     //     method: "POST",
-    //     body: JSON.stringify({
-    //         date: sample.date,
-    //         bookings: sample.bookings,
-    //         expenses: sample.expenses,
-    //         cash_collected: sample.cashCollected,
-    //         billings: sample.billings,
-    //         balance: sample.balance,
-    //         is_forecast: sample.is_forecast,
-    //     }),
+    //     body: JSON.stringify(sample),
     //     headers: {
     //         "Content-type": "application/json; charset=UTF-8"
     //     }
     // })
-
-    d3.json('/api/metricValues/bulk', {
-        method: "POST",
-        body: JSON.stringify(sample),
-        headers: {
-            "Content-type": "application/json; charset=UTF-8"
-        }
-    })
 
     initializeSpreadsheet(MV)
     updateMetric("bookings")

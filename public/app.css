@@ -50,6 +50,9 @@ div#bank-chart {
   fill: green;
   stroke: white;
 }
+.forecast-dot.curving {
+  fill: #aaaa00;
+}
 .forecast-dot:hover {
     cursor: ns-resize;
 }

@@ -2,6 +2,8 @@ const margin = { top: 20, right: 20, bottom: 70, left: 60 },
     width = 600 - margin.left - margin.right,
     height = 300 - margin.top - margin.bottom
 
+const DRAG_THRESHOLD = 0.05 // Trigger special drag behavior at 5% distance from dragged object
+
 function setupAxes(svg, metric, xScale, yScale) {
     const firstDate = d3.min(historicalData(), (d) => {
         return d.date
@@ -113,6 +115,7 @@ function addLines(svg, metric, xScale, yScale) {
     }
     function dragging(d) {
         // TODO: Make a lasso to select multiple forecast points
+        // TODO: Make scale dynamic somehow?
         if (d3.event.sourceEvent.shiftKey) {
             d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (d, i) {
                 d3.select(this).attr("cy", d3.event.y)
@@ -121,11 +124,70 @@ function addLines(svg, metric, xScale, yScale) {
         } else {
             d3.select(this).attr("cy", d3.event.y)
             d[metric] = Math.round(yScale.invert(d3.event.y))
+            let selectedX = d3.select(this).attr("cx")
+            let selectedY = d3.select(this).attr("cy")
+            let cursorDistancePct = (d3.event.x - selectedX) / selectedX // acts as line slope
+            
+            // Drag cursor past drag action threshold to the left - linear growth
+            if (cursorDistancePct < -1 * DRAG_THRESHOLD) {
+                let newY
+
+                d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (f, i) {
+                    let cx = d3.select(this).attr("cx")
+
+                    if (cx > selectedX) { // only change points to the right of dragged point
+                        d3.select(this).attr("class", "forecast-dot curving")
+
+                        let xDistance = cx - selectedX
+
+                        
+                        if (cursorDistancePct > -2 * DRAG_THRESHOLD) { // Make all points the same Y Value
+                            newY = selectedY
+                        } else {
+                            newY = parseFloat(selectedY) + xDistance * (cursorDistancePct + 2 * DRAG_THRESHOLD)
+                        }
+                        
+
+                        d3.select(this).attr("cy", newY)
+                        f[metric] = Math.round(yScale.invert(newY))
+                    }
+                })
+            }
+
+            // Drag cursor past drag action threshold to the right - exponential growth
+            if (cursorDistancePct > DRAG_THRESHOLD) {
+                let newY
+
+                d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (f, i) {
+                    let cx = d3.select(this).attr("cx")
+                    
+                    if (cx > selectedX) { // only change points to the right of dragged point
+                        d3.select(this).attr("class", "forecast-dot curving")
+
+                        if (cursorDistancePct < 2 * DRAG_THRESHOLD) { // Make all points the same Y Value
+                            newY = selectedY
+                        } else {
+                            // TODO: Calculate the right exponent based on d[date] and f[date]
+                            newY = parseFloat(selectedY) + -Math.pow(1 + cursorDistancePct, i + 1)
+                        }
+
+
+                        d3.select(this).attr("cy", newY)
+                        f[metric] = Math.round(yScale.invert(newY))
+                    }
+                })
+            }
+
+            // How to "select" all points to the right
+            // Use array to find index of d?
         }
         d3.select(`#forecast1-${metric}`).attr("d", forecastLine)
     }
     function dragEnd(d) {
         d3.select(this).attr("r", 2)
+        d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (f, i) {
+            d3.select(this).attr("class", "forecast-dot") // reset styles
+        })
 
         syncForecasts()
         updateMetric("cashCollected")
