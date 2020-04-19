@@ -3,6 +3,7 @@ const margin = { top: 20, right: 20, bottom: 70, left: 60 },
     height = 300 - margin.top - margin.bottom
 
 const DRAG_THRESHOLD = 0.05 // Trigger special drag behavior at 5% distance from dragged object
+let isDragging = false
 
 function setupAxes(svg, metric, xScale, yScale) {
     const firstDate = d3.min(historicalData(), (d) => {
@@ -15,10 +16,6 @@ function setupAxes(svg, metric, xScale, yScale) {
     yScale.domain([0, d3.max(MV, function (d) {
         return d[metric]
     })])
-
-    let yAxisScale = d3.scaleLinear()
-        .domain([d3.min(MV, d => d[metric]), d3.max(MV, d => d[metric])])
-        .range([height - yScale(d3.min(MV, d => d[metric])), 0]);
 
     const yaxis = d3.axisLeft()
         .scale(yScale)
@@ -110,10 +107,22 @@ function addLines(svg, metric, xScale, yScale) {
         .on("start", dragStart)
         .on("drag", dragging)
         .on("end", dragEnd))
-    function dragStart() {
+
+    function dragStart(d, i) {
+        isDragging = true
         d3.select(this).raise().attr("r", 4)
+        d3.select("#t-" + i).remove();  // Remove text location
+
+        svg.append("text")
+            .attr("id", "d-" + i)
+            .attr("x", function () { return xScale(d.date) - 30 })
+            .attr("y", function () { return yScale(d[metric]) - 15 })
+            .text(() => {
+                return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
+            })
+            .attr("font-size", 8)
     }
-    function dragging(d) {
+    function dragging(d, i) {
         // TODO: Make a lasso to select multiple forecast points
         // TODO: Make scale dynamic somehow?
         if (d3.event.sourceEvent.shiftKey) {
@@ -127,6 +136,7 @@ function addLines(svg, metric, xScale, yScale) {
             let selectedX = d3.select(this).attr("cx")
             let selectedY = d3.select(this).attr("cy")
             let cursorDistancePct = (d3.event.x - selectedX) / selectedX // acts as line slope
+            let selectedIdx = MV.findIndex(mv => mv.date.getTime() === d.date.getTime())
             
             // Drag cursor past drag action threshold to the left - linear growth
             if (cursorDistancePct < -1 * DRAG_THRESHOLD) {
@@ -156,35 +166,38 @@ function addLines(svg, metric, xScale, yScale) {
 
             // Drag cursor past drag action threshold to the right - exponential growth
             if (cursorDistancePct > DRAG_THRESHOLD) {
-                let newY
 
                 d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (f, i) {
-                    let cx = d3.select(this).attr("cx")
+                    let fIndex = MV.findIndex(mv => mv.date.getTime() === f.date.getTime())
                     
-                    if (cx > selectedX) { // only change points to the right of dragged point
+                    if (fIndex > selectedIdx) { // only change points to the right of dragged point
                         d3.select(this).attr("class", "forecast-dot curving")
 
                         if (cursorDistancePct < 2 * DRAG_THRESHOLD) { // Make all points the same Y Value
-                            newY = selectedY
+                            f[metric] = d[metric]
                         } else {
-                            // TODO: Calculate the right exponent based on d[date] and f[date]
-                            newY = parseFloat(selectedY) + -Math.pow(1 + cursorDistancePct, i + 1)
+                            let exponent = cursorDistancePct - 2 * DRAG_THRESHOLD
+                            f[metric] = Math.round(d[metric] * Math.pow(1 + exponent, fIndex - selectedIdx))
                         }
 
-
-                        d3.select(this).attr("cy", newY)
-                        f[metric] = Math.round(yScale.invert(newY))
+                        d3.select(this).attr("cy", yScale(f[metric]))
                     }
                 })
-            }
 
-            // How to "select" all points to the right
-            // Use array to find index of d?
+
+            }
         }
         d3.select(`#forecast1-${metric}`).attr("d", forecastLine)
+        d3.select("#d-" + i).text(() => {
+            return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
+        })
+
+
     }
-    function dragEnd(d) {
+    function dragEnd(d, i) {
+        isDragging = false
         d3.select(this).attr("r", 2)
+        d3.select("#d-" + i).remove();  // Remove text location
         d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (f, i) {
             d3.select(this).attr("class", "forecast-dot") // reset styles
         })
@@ -192,6 +205,8 @@ function addLines(svg, metric, xScale, yScale) {
         syncForecasts()
         updateMetric("cashCollected")
         updateMetric("balance")
+
+        // TODO: Update scale
     }
 
     function mouseoverLine(d, i) {
@@ -200,30 +215,22 @@ function addLines(svg, metric, xScale, yScale) {
     function mouseoutLine(d, i) {
         this.style.stroke = "orange"
     }
-    // Create Event Handlers for mouse
-    function handleMouseOver(d, i) {
-
-        d3.select(this).attr({
-            fill: "orange",
-        });
-
-        svg.append("text")
-            .attr("id", "t-" + i)
-            .attr("x", function () { return xScale(d.date) - 30 })
-            .attr("y", function () { return yScale(d[metric]) - 15 })
-            .text(() => {
-                return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
-            })
-            .attr("font-size", 8)
+    
+    function handleMouseOver(d, i) { // Add hover text
+        if (!isDragging) {
+            svg.append("text")
+                .attr("id", "t-" + i)
+                .attr("x", function () { return xScale(d.date) - 30 })
+                .attr("y", function () { return yScale(d[metric]) - 15 })
+                .text(() => {
+                    return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
+                })
+                .attr("font-size", 8)
+        }
     }
 
     function handleMouseOut(d, i) {
-        d3.select(this).attr({
-            fill: "green",
-        });
-
-        // Select text by id and then remove
-        d3.select("#t-" + i).remove();  // Remove text location
+        d3.select("#t-" + i).remove();  // Remove hover text
     }
 }
 
