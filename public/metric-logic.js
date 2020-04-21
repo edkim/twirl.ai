@@ -1,6 +1,9 @@
+let xScale = {},
+    yScale = {}
+
 function updateMetric(metric) {
-    const xScale = d3.scaleTime().range([margin.left, width - margin.right]);
-    const yScale = d3.scaleLinear().range([height - margin.bottom, margin.top]);
+    xScale[metric] = d3.scaleTime().range([margin.left, width - margin.right]);
+    yScale[metric] = d3.scaleLinear().range([height - margin.bottom, margin.top]);
 
     d3.select(`#${metric}-chart`).remove() // Clear any existing chart
     
@@ -12,8 +15,8 @@ function updateMetric(metric) {
         .append("svg")
         .attr("viewBox", [0, 0, width, height])
 
-    setupAxes(svg, metric, xScale, yScale)
-    addLines(svg, metric, xScale, yScale)
+    setupAxes(svg, metric)
+    addLines(svg, metric)
 }
 
 function makeForecast(metric) {

@@ -5,28 +5,28 @@ const margin = { top: 20, right: 20, bottom: 70, left: 60 },
 const DRAG_THRESHOLD = 0.05 // Trigger special drag behavior at 5% distance from dragged object
 let isDragging = false
 
-function setupAxes(svg, metric, xScale, yScale) {
+function setupAxes(svg, metric) {
     const firstDate = d3.min(historicalData(), (d) => {
         return d.date
     })
 
     makeForecast(metric)
 
-    xScale.domain([firstDate, forecastEndDate])
-    yScale.domain([0, d3.max(MV, function (d) {
+    xScale[metric].domain([firstDate, forecastEndDate])
+    yScale[metric].domain([0, d3.max(MV, function (d) {
         return d[metric]
     })])
 
     const yaxis = d3.axisLeft()
-        .scale(yScale)
+        .scale(yScale[metric])
 
     const xaxis = d3.axisBottom()
-        .scale(xScale)
+        .scale(xScale[metric])
         .ticks(d3.timeMonth.every(3))
         .tickFormat(d3.timeFormat('%b %Y'))
 
     svg.append("g")
-        .attr("class", "axis")
+        .attr("class", "axis x-axis")
         .attr("transform", `translate(0,${height - margin.bottom})`)
         .call(xaxis)
         .selectAll("text")
@@ -37,7 +37,7 @@ function setupAxes(svg, metric, xScale, yScale) {
 
 
     svg.append("g")
-        .attr("class", "axis")
+        .attr("class", "axis y-axis")
         .attr("transform", `translate(${margin.left},0)`)
         .call(yaxis)
         .append("text")
@@ -49,11 +49,16 @@ function setupAxes(svg, metric, xScale, yScale) {
 
 }
 
-function addLines(svg, metric, xScale, yScale) {
+function addLines(svg, metric) {
+    // Clear any existing chart elements
+    d3.selectAll(`#${metric}-chart svg circle`).remove()
+    d3.selectAll(`#${metric}-chart svg .line`).remove()
+    d3.selectAll(`#${metric}-chart svg .forecast-line`).remove()
+
     // Add historical data as a line plot
     const line = d3.line()
-        .x(function (d, i) { return xScale(d.date) })
-        .y(function (d) { return yScale(d[metric]) })
+        .x(function (d, i) { return xScale[metric](d.date) })
+        .y(function (d) { return yScale[metric](d[metric]) })
         .curve(d3.curveMonotoneX)
 
     svg.append("path")
@@ -71,16 +76,16 @@ function addLines(svg, metric, xScale, yScale) {
         .data(historicalData())
         .enter().append("circle") // Uses the enter().append() method
         .attr("class", "dot") // Assign a class for styling
-        .attr("cx", function (d) { return xScale(d.date) })
-        .attr("cy", function (d) { return yScale(d[metric]) })
+        .attr("cx", function (d) { return xScale[metric](d.date) })
+        .attr("cy", function (d) { return yScale[metric](d[metric]) })
         .attr("r", 2)
         .on("mouseover", handleMouseOver)
         .on("mouseout", handleMouseOut)
 
 
     const forecastLine = d3.line()
-        .x(function (d, i) { return xScale(d.date) })
-        .y(function (d) { return yScale(d[metric]) })
+        .x(function (d, i) { return xScale[metric](d.date) })
+        .y(function (d) { return yScale[metric](d[metric]) })
         .curve(d3.curveMonotoneX)
 
 
@@ -96,8 +101,8 @@ function addLines(svg, metric, xScale, yScale) {
         .data(forecastData())
         .enter().append("circle")
         .attr("class", `forecast-dot .${metric}`)
-        .attr("cx", function (d) { return xScale(d.date) })
-        .attr("cy", function (d) { return yScale(d[metric]) })
+        .attr("cx", function (d) { return xScale[metric](d.date) })
+        .attr("cy", function (d) { return yScale[metric](d[metric]) })
         .attr("r", 2)
         .on("mouseover", handleMouseOver)
         .on("mouseout", handleMouseOut)
@@ -115,8 +120,8 @@ function addLines(svg, metric, xScale, yScale) {
 
         svg.append("text")
             .attr("id", "d-" + i)
-            .attr("x", function () { return xScale(d.date) - 30 })
-            .attr("y", function () { return yScale(d[metric]) - 15 })
+            .attr("x", function () { return xScale[metric](d.date) - 30 })
+            .attr("y", function () { return yScale[metric](d[metric]) - 15 })
             .text(() => {
                 return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
             })
@@ -128,23 +133,20 @@ function addLines(svg, metric, xScale, yScale) {
         if (d3.event.sourceEvent.shiftKey) {
             d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (d, i) {
                 d3.select(this).attr("cy", d3.event.y)
-                d[metric] = Math.round(yScale.invert(d3.event.y))
+                d[metric] = Math.round(yScale[metric].invert(d3.event.y))
             })
         } else {
             d3.select(this).attr("cy", d3.event.y)
-            d[metric] = Math.round(yScale.invert(d3.event.y))
+            d[metric] = Math.round(yScale[metric].invert(d3.event.y))
             let selectedX = d3.select(this).attr("cx")
-            let selectedY = d3.select(this).attr("cy")
             let cursorDistancePct = (d3.event.x - selectedX) / selectedX // acts as line slope
             let selectedIdx = MV.findIndex(mv => mv.date.getTime() === d.date.getTime())
             
             // Drag cursor past drag action threshold to the left - linear growth
             if (cursorDistancePct < -1 * DRAG_THRESHOLD) {
-                let newY
 
                 d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (f, i) {
                     let fIndex = MV.findIndex(mv => mv.date.getTime() === f.date.getTime())
-                    let cx = d3.select(this).attr("cx")
 
                     if (fIndex > selectedIdx) { // only change points to the right of dragged point
                         d3.select(this).attr("class", "forecast-dot curving")
@@ -156,7 +158,7 @@ function addLines(svg, metric, xScale, yScale) {
                             f[metric] = d[metric] + linearGrowth * (fIndex - selectedIdx)
                         }
                         
-                        d3.select(this).attr("cy", yScale(f[metric]))
+                        d3.select(this).attr("cy", yScale[metric](f[metric]))
                     }
                 })
             }
@@ -177,7 +179,7 @@ function addLines(svg, metric, xScale, yScale) {
                             f[metric] = Math.round(d[metric] * Math.pow(1 + exponent, fIndex - selectedIdx))
                         }
 
-                        d3.select(this).attr("cy", yScale(f[metric]))
+                        d3.select(this).attr("cy", yScale[metric](f[metric]))
                     }
                 })
 
@@ -188,9 +190,8 @@ function addLines(svg, metric, xScale, yScale) {
         d3.select("#d-" + i).text(() => {
             return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
         })
-
-
     }
+
     function dragEnd(d, i) {
         isDragging = false
         d3.select(this).attr("r", 2)
@@ -203,7 +204,35 @@ function addLines(svg, metric, xScale, yScale) {
         updateMetric("cashCollected")
         updateMetric("balance")
 
-        // TODO: Update scale
+        updateScale(svg, metric)
+    }
+
+    // TODO: clean up code
+    function updateScale(svg, metric) {
+        if (metric == "cashCollected" || metric == "balance") {
+            return
+        }
+        yScale[metric].domain([0, d3.max(MV, function (d) {
+            return d[metric]
+        })])
+
+        const yaxis = d3.axisLeft()
+            .scale(yScale[metric])
+        
+        d3.selectAll(`#${metric}-chart svg .y-axis`).remove()
+
+        addLines(svg, metric)
+    
+        svg.append("g")
+            .attr("class", "axis y-axis")
+            .attr("transform", `translate(${margin.left},0)`)
+            .call(yaxis)
+            .append("text")
+            .attr("transform", "rotate(-90)")
+            .attr("dy", ".75em")
+            .attr("y", 6)
+            .style("text-anchor", "end")
+            .text(toTitleCase(metric))
     }
 
     function mouseoverLine(d, i) {
@@ -217,8 +246,8 @@ function addLines(svg, metric, xScale, yScale) {
         if (!isDragging) {
             svg.append("text")
                 .attr("id", "t-" + i)
-                .attr("x", function () { return xScale(d.date) - 30 })
-                .attr("y", function () { return yScale(d[metric]) - 15 })
+                .attr("x", function () { return xScale[metric](d.date) - 30 })
+                .attr("y", function () { return yScale[metric](d[metric]) - 15 })
                 .text(() => {
                     return [d3.timeFormat("%b %Y")((d.date)), " $" + d[metric]]
                 })
