@@ -143,23 +143,20 @@ function addLines(svg, metric, xScale, yScale) {
                 let newY
 
                 d3.selectAll(`#${metric}-chart .forecast-dot`).each(function (f, i) {
+                    let fIndex = MV.findIndex(mv => mv.date.getTime() === f.date.getTime())
                     let cx = d3.select(this).attr("cx")
 
-                    if (cx > selectedX) { // only change points to the right of dragged point
+                    if (fIndex > selectedIdx) { // only change points to the right of dragged point
                         d3.select(this).attr("class", "forecast-dot curving")
 
-                        let xDistance = cx - selectedX
-
-                        
                         if (cursorDistancePct > -2 * DRAG_THRESHOLD) { // Make all points the same Y Value
-                            newY = selectedY
+                            f[metric] = d[metric]
                         } else {
-                            newY = parseFloat(selectedY) + xDistance * (cursorDistancePct + 2 * DRAG_THRESHOLD)
+                            let linearGrowth = Math.round(d[metric] * -(cursorDistancePct + 2 * DRAG_THRESHOLD))
+                            f[metric] = d[metric] + linearGrowth * (fIndex - selectedIdx)
                         }
                         
-
-                        d3.select(this).attr("cy", newY)
-                        f[metric] = Math.round(yScale.invert(newY))
+                        d3.select(this).attr("cy", yScale(f[metric]))
                     }
                 })
             }
