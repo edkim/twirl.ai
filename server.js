@@ -29,10 +29,28 @@ db.sequelize.sync();
 
 // simple route
 app.get("/", (req, res) => {
-  res.render('index');
+  //TODO: if there's a query param fetch data
+  let scenarioData
+
+  if (req.query.id) {
+    db.metricValues.findAll({ 
+      where: { scenario_id: req.query.id },
+      order: ['date']
+    }).then((result) => {
+      scenarioData = JSON.stringify(result)
+
+      res.render('index', {
+        scenarioData: scenarioData
+      });
+    })
+  } else {
+    res.render('index', {
+      scenarioData: null
+    });
+  }
+
 });
 
-require("./app/routes/turorial.routes")(app);
 require("./app/routes/metric.routes")(app);
 require("./app/routes/metric-value.routes")(app);
 

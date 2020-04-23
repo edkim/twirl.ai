@@ -1,7 +1,10 @@
 module.exports = (sequelize, Sequelize) => {
     const MetricValue = sequelize.define("metric-value", {
         date: {
-            type: Sequelize.DATEONLY
+            type: Sequelize.DATE
+        },
+        scenario_id: {
+            type: Sequelize.STRING
         },
         bookings: {
             type: Sequelize.INTEGER

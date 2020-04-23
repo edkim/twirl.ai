@@ -10,7 +10,11 @@ function setupAxes(svg, metric) {
         return d.date
     })
 
-    makeForecast(metric)
+    // TODO: Please fix this garbage.
+    if(metric == "cashCollected" || metric == "balance" || forecastData().length == 0 || forecastData()[0][metric] == undefined) {
+        console.log("hi", forecastData())
+        makeForecast(metric)
+    }
 
     xScale[metric].domain([firstDate, forecastEndDate])
     yScale[metric].domain([0, d3.max(MV, function (d) {

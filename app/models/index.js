@@ -32,10 +32,6 @@ db.metricValues.belongsTo(db.users, {
   foreignKey: 'user_id'
 });
 
-db.metricValues.belongsTo(db.scenarios, {
-  foreignKey: 'scenario_id'
-});
-
 db.scenarios.belongsTo(db.users, {
   foreignKey: 'user_id'
 });

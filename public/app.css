@@ -4,19 +4,14 @@ svg {
   font: 14px 'Open Sans';
 }
 
-div#bookings-chart {
-    overflow: scroll;
+.save-button {
+  font-size: 18px;
 }
-div#ar-chart {
-    overflow: scroll;
-    width: 48%;
-    display: inline-block;
+
+.save-button:hover {
+  cursor: pointer;
 }
-div#bank-chart {
-    overflow: scroll;
-    width: 48%;
-    display: inline-block;
-}
+
 .axis path,
 .axis line {
   fill: none;

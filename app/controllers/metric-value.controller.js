@@ -1,6 +1,5 @@
 const db = require("../models");
 const MetricValue = db.metricValues;
-const Op = db.Sequelize.Op;
 
 // Create and Save a new MetricValue
 exports.create = (req, res) => {
@@ -16,9 +15,10 @@ exports.create = (req, res) => {
     // Create a MetricValue
     const metricValue = {
         date: req.body.date,
+        scenario_id: req.body.scenarioId,
         bookings: req.body.bookings,
         expenses: req.body.expenses,
-        cash_collected: req.body.cash_collected,
+        cash_collected: req.body.cashCollected,
         billings: req.body.billings,
         balance: req.body.balance,
         is_forecast: req.body.is_forecast,
@@ -52,9 +52,10 @@ exports.createMany = (req, res) => {
         // Create a MetricValue
         const metricValue = {
             date: d.date,
+            scenario_id: d.scenarioId,
             bookings: d.bookings,
             expenses: d.expenses,
-            cash_collected: d.cash_collected,
+            cash_collected: d.cashCollected,
             billings: d.billings,
             balance: d.balance,
             is_forecast: d.is_forecast,
@@ -81,8 +82,8 @@ exports.createMany = (req, res) => {
 
 // Retrieve all MetricValues from the database.
 exports.findAll = (req, res) => {
-    const title = req.query.title;
-    var condition = title ? { title: { [Op.like]: `%${title}%` } } : null;
+    const id = req.query.id;
+    var condition = scenarioId ? { scenario_id: id } : null;
 
     MetricValue.findAll({ where: condition })
         .then(data => {
