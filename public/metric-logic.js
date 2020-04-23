@@ -34,7 +34,7 @@ function makeForecast(metric) {
                 if (previousMonthForecasts && previousMonthForecasts.billings) { // previous month Billings forecast exists
                     billingsLastMonth = previousMonthForecasts.billings
                 } else { 
-                    console.error("Last month's billings data found")
+                    console.error("Previous month's billings data not found when calculating cash collections.")
                 }
                 // use last month's forecast billings
                 let futureCashCollected = Math.round(CURRENT_COLLECTION_RATE * billingsLastMonth) // TODO: Add pastDue AR
@@ -72,7 +72,6 @@ function makeForecast(metric) {
             const slope = linearRegression(historicalData()).a
             const yIntercept = linearRegression(historicalData()).b
 
-
             while (forecastMonth < forecastEndDate) {
                 forecastMonth = nextMonth(forecastMonth)
                 let forecastValue = Math.round(slope * forecastMonth + yIntercept)
@@ -83,7 +82,12 @@ function makeForecast(metric) {
                     // TODO: Account for churn
                     let fData = MV.find(x => x.date.getTime() == forecastMonth.getTime())
                     let dateLastYear = new Date(fData.date.getFullYear() - 1, fData.date.getMonth(), 0)
-                    let forecastBillings = fData.bookings + MV.find(x => x.date.getTime() == dateLastYear.getTime()).billings
+                    let yearAgoData = MV.find(x => x.date.getTime() == dateLastYear.getTime())
+                    let lastYearsBillings = 0
+                    if (yearAgoData && yearAgoData.billings) {
+                        lastYearsBillings = yearAgoData.billings
+                    }
+                    let forecastBillings = fData.bookings + lastYearsBillings
                     updateMV("billings", forecastMonth, forecastBillings)
                 }
             }

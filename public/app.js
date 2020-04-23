@@ -11,16 +11,22 @@ let lastDataDate, forecastEndDate // Global for the last date for which we have 
 const parseDateCSV = d3.timeParse("%m/%d/%Y")
 const parseDateDB = d3.timeParse("%Y-%m-%d")
 const formatDateSS = d3.timeFormat("%Y-%m-%d 00:00:00") // Format needed for jExcel spreadsheet
+const parseDateSS = d3.timeParse("%Y-%m-%d 00:00:00")
 
 if (document.getElementById("data")) {
     let jsonData = JSON.parse(document.getElementById("data").innerText)
     jsonData.map(d => {
-        d.date = parseDateDB(d.date)
-        d.ssDate = formatDateSS(d.date)
-        d.cashCollected = d.cash_collected
+        MV.push({
+            date: parseDateDB(d.date),
+            ssData: formatDateSS(parseDateDB(d.date)),
+            bookings: d.bookings,
+            expenses: d.expenses,
+            billings: d.billings,
+            cashCollected: d.cash_collected,
+            balance: d.balance,
+            is_forecast: d.is_forecast,
+        })
     })
-    
-    MV = jsonData
     
     // TODO: make spreadsheet work when loading data from DB
 
@@ -37,15 +43,14 @@ if (document.getElementById("data")) {
                 ssDate: ssDate,
                 bookings: Number(d["Bookings"].replace(/[^0-9.-]+/g, "")),
                 expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
-                cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
                 billings: Number(d["Billings"].replace(/[^0-9.-]+/g, "")),
-                currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
-                pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
+                cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
+                // currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
+                // pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
                 balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
                 is_forecast: false,
             })
         })
-        console.log("MV", MV)
 
         initializeApp()
     })
@@ -57,9 +62,11 @@ function initializeApp() {
     }))
 
     // 12 month forecast horizon
-    forecastEndDate = new Date(lastDataDate.getFullYear() + 1, lastDataDate.getMonth(), 0)
+    forecastEndDate = new Date(lastDataDate.getFullYear() + 1, nextMonth(lastDataDate).getMonth(), 0)
 
-    initializeSpreadsheet(MV)
+    if (!window.spreadsheet || !window.spreadsheet.getData) {
+        initializeSpreadsheet(historicalData())
+    }
     updateMetric("bookings")
     updateMetric("expenses")
     updateMetric("cashCollected")
