@@ -12,7 +12,6 @@ function setupAxes(svg, metric) {
 
     // TODO: Please fix this garbage.
     if(metric == "cashCollected" || metric == "balance" || forecastData().length == 0 || forecastData()[0][metric] == undefined) {
-        console.log("hi", forecastData())
         makeForecast(metric)
     }
 

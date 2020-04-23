@@ -28,7 +28,7 @@ function initializeSpreadsheet(data) {
                 type: 'numeric',
                 title: 'Cash Collected',
                 mask: '$#,##',
-                width: 80,
+                width: 120,
             },
             {
                 type: 'numeric',
@@ -40,21 +40,29 @@ function initializeSpreadsheet(data) {
                 type: 'numeric',
                 title: 'AR - Current',
                 mask: '$#,##',
-                width: 80,
+                width: 120,
             },
             {
                 type: 'numeric',
                 title: 'AR - Past Due',
                 mask: '$#,##',
-                width: 80,
+                width: 120,
             },
             {
                 type: 'numeric',
                 title: 'Cash Balance',
                 mask: '$#,##',
-                width: 80,
+                width: 120,
+            },
+            {
+                type: 'hidden',
+                title: 'Is forecast',
             },
         ],
+        onafterchanges: function () {
+            // TODO: Make this work
+            console.log("spreadsheet data", this.data)
+        },
     })
 }
 

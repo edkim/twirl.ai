@@ -21,7 +21,8 @@ if (document.getElementById("data")) {
     })
     
     MV = jsonData
-    console.log("data", MV)
+    
+    // TODO: make spreadsheet work when loading data from DB
 
     initializeApp()
 } else {
@@ -38,8 +39,8 @@ if (document.getElementById("data")) {
                 expenses: Number(d["Expenses"].replace(/[^0-9.-]+/g, "")),
                 cashCollected: Number(d["Cash Collected"].replace(/[^0-9.-]+/g, "")),
                 billings: Number(d["Billings"].replace(/[^0-9.-]+/g, "")),
-                // currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
-                // pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
+                currentAR: Number(d["AR - Current"].replace(/[^0-9.-]+/g, "")),
+                pastDueAR: Number(d["AR - Past Due"].replace(/[^0-9.-]+/g, "")),
                 balance: Number(d["Ending Balance"].replace(/[^0-9.-]+/g, "")),
                 is_forecast: false,
             })
